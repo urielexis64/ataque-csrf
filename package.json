@@ -1,0 +1,20 @@
+{
+	"name": "csrf",
+	"version": "1.0.0",
+	"description": "",
+	"main": "index.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"start": "node index",
+		"dev": "nodemon index"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"dependencies": {
+		"connect-flash-plus": "^0.2.1",
+		"express": "^4.17.1",
+		"express-handlebars": "^5.3.0",
+		"express-session": "^1.17.1"
+	}
+}
