@@ -1,13 +1,31 @@
 const express = require("express");
 const session = require("express-session");
+const flash = require("connect-flash-plus");
 const handlebars = require("express-handlebars");
 const fs = require("fs");
+const {v4: uuid} = require("uuid");
+const cors = require("cors");
 const {response, request} = require("express");
 
 const app = express();
 const PORT = 4200;
 
 // Middlewares
+
+// CORS permite establecer el header "Access-Control-Allow-Origin: *" que
+// permite ver las respuestas de peticiones a servidores externos siempre
+// y cuando NO se incluyan las credenciales (credentials: "include")
+
+// ! El siguiente código SÍ dejaría acceder al atacante ya qe daría acceso
+// ! a las credenciales y a mostrar la respuesta de la petición
+
+/* app.use(
+	cors({
+		origin: "http://localhost:5000",
+		credentials: true,
+	})
+); */
+
 app.use(express.urlencoded({extended: true}));
 app.use(
 	session({
@@ -16,6 +34,8 @@ app.use(
 		saveUninitialized: false,
 	})
 );
+
+app.use(flash());
 app.set("views", __dirname);
 app.engine(
 	"hbs",
@@ -44,6 +64,26 @@ const home = (req = request, res = response, next) => {
 	}
 };
 
+// CSRF
+const tokens = new Map();
+
+const csrfToken = (sessionId) => {
+	const token = uuid();
+	tokens.get(sessionId).add(token);
+	// token expires each hour
+	setTimeout(() => tokens.get(sessionId).delete(token), 60 * 60_000);
+	return token;
+};
+
+const csrf = (req, res, next) => {
+	const token = req.body.csrf;
+	if (!token || !tokens.get(req.sessionID).has(token)) {
+		res.status(422).send("CSRF Token missing or expired");
+	} else {
+		next();
+	}
+};
+
 // DB
 const users = JSON.parse(fs.readFileSync("./db.json"));
 
@@ -53,21 +93,27 @@ app.get("/home", login, (req, res) => {
 });
 
 app.get("/login", home, (req, res) => {
-	res.render("login");
+	console.log(req.session);
+	res.render("login", {message: req.flash("message")});
 });
 
 app.post("/login", (req, res) => {
 	const {email, password} = req.body;
 
 	if (!email || !password) {
-		res.status(400).send("Fill all the fields");
+		req.flash("message", "Fill all the fields");
+		res.redirect("/login");
 	}
 
 	const user = users.find((user) => user.email === email);
+
 	if (!user || user.password !== password) {
-		return res.status(400).send("Invalid credentials");
+		req.flash("message", "Invalid credentials");
+		return res.redirect("/login");
 	}
+
 	req.session.userId = user.id;
+	tokens.set(req.sessionID, new Set());
 	console.log(req.session);
 	res.redirect("/home");
 });
@@ -78,10 +124,10 @@ app.get("/logout", login, (req, res) => {
 });
 
 app.get("/edit", login, (req, res) => {
-	res.render("edit");
+	res.render("edit", {token: csrfToken(req.sessionID)});
 });
 
-app.post("/edit", login, (req, res) => {
+app.post("/edit", login, csrf, (req, res) => {
 	const user = users.find((user) => user.id === req.session.userId);
 	user.email = req.body.email;
 	fs.writeFileSync("./db.json", JSON.stringify([user]));
