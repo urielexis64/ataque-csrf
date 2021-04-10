@@ -25,6 +25,8 @@ Los tokens CSRF pueden prevenir los ataques CSRF al hacer imposible que un ataca
 ## Paquetes utilizados
 
 -   express
+-   cors
+-   uuid
 -   express-session
 -   express-handlebars
 -   connect-flash-plus
